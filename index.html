@@ -1,0 +1,557 @@
+<style>
+  * { box-sizing: border-box; }
+
+  .app {
+    --bg-0: #14171a;
+    --bg-1: #1c2024;
+    --surface: #22262b;
+    --surface-2: #282d33;
+    --border: #363c43;
+    --text: #f2efe9;
+    --text-dim: #9aa1a8;
+    --accent: #ff6a13;
+    --accent-dim: #7a3d16;
+    --accent-2: #ffc300;
+    --danger: #e5484d;
+    --success: #5fa052;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+    background:
+      radial-gradient(1200px 400px at 50% -10%, #262b31 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-0), var(--bg-1));
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100%;
+    padding: 20px 14px 60px;
+  }
+
+  .wrap { max-width: 720px; margin: 0 auto; }
+
+  /* ---------- Header ---------- */
+  .eyebrow {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+  .eyebrow .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+  h1 {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin: 0 0 4px;
+  }
+  .sub {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin: 0 0 22px;
+    line-height: 1.5;
+  }
+
+  /* ---------- Date plate (signature element) ---------- */
+  .plate {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(180deg, #2a2f35, #1f2327);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--accent);
+    border-radius: 6px;
+    padding: 10px 16px 10px 14px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+    margin-bottom: 22px;
+  }
+  .plate::before, .plate::after {
+    content: "";
+    position: absolute;
+    top: 5px;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: #4a5158;
+    box-shadow: inset 0 1px 1px rgba(0,0,0,0.6);
+  }
+  .plate::before { left: 6px; }
+  .plate::after { right: 6px; }
+  .plate .label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .plate .date {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 0.02em;
+    color: var(--accent-2);
+  }
+
+  /* ---------- Toggle ---------- */
+  .mode-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .mode-card.on {
+    border-color: var(--accent);
+    background: linear-gradient(180deg, #2a2420, var(--surface));
+  }
+  .mode-text .title { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
+  .mode-text .desc { font-size: 12.5px; color: var(--text-dim); }
+  .mode-card.on .mode-text .desc { color: var(--accent-2); }
+
+  .switch {
+    position: relative;
+    width: 56px; height: 32px;
+    background: #34393f;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .switch.on { background: var(--accent); border-color: var(--accent); }
+  .switch .knob {
+    position: absolute; top: 3px; left: 3px;
+    width: 24px; height: 24px;
+    background: #f2efe9;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  }
+  .switch.on .knob { transform: translateX(24px); }
+
+  /* ---------- Corner picker ---------- */
+  .options-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 22px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .corner-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 18px);
+    grid-template-rows: repeat(2, 18px);
+    gap: 3px;
+    background: var(--surface-2);
+    padding: 4px;
+    border-radius: 6px;
+  }
+  .corner-grid button {
+    width: 18px; height: 18px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background: #34393f;
+    cursor: pointer;
+    padding: 0;
+  }
+  .corner-grid button.active { background: var(--accent); border-color: var(--accent); }
+
+  /* ---------- Buttons ---------- */
+  .action-row { display: flex; gap: 10px; margin-bottom: 26px; }
+  .btn {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px;
+    padding: 18px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 13.5px;
+    cursor: pointer;
+    transition: transform 0.08s, border-color 0.15s, background 0.15s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn .icon { font-size: 22px; }
+  .btn.primary {
+    background: linear-gradient(180deg, var(--accent), #e0590c);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .btn.primary:hover { filter: brightness(1.06); }
+  .btn.ghost:hover { border-color: var(--accent); }
+
+  input[type="file"] { display: none; }
+
+  /* ---------- Grid ---------- */
+  .grid-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .grid-head .count { font-family: var(--mono); font-size: 13px; color: var(--text-dim); }
+  .grid-head .count b { color: var(--text); }
+
+  .empty {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--text-dim);
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    font-size: 13.5px;
+    line-height: 1.7;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+  .card {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  .card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card .badge {
+    position: absolute; top: 6px; left: 6px;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    padding: 3px 6px;
+    border-radius: 4px;
+    background: rgba(20,23,26,0.75);
+    backdrop-filter: blur(2px);
+  }
+  .card .badge.stamped { color: var(--accent-2); border: 1px solid var(--accent-dim); }
+  .card .badge.plain { color: var(--text-dim); border: 1px solid var(--border); }
+  .card .remove {
+    position: absolute; top: 6px; right: 6px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: rgba(20,23,26,0.75);
+    border: 1px solid var(--border);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card .remove:hover { background: var(--danger); border-color: var(--danger); }
+  .card .dl {
+    position: absolute; bottom: 6px; right: 6px;
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    background: rgba(20,23,26,0.75);
+    border: 1px solid var(--border);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card .dl:hover { background: var(--accent); border-color: var(--accent); }
+
+  .footer-row {
+    display: flex; gap: 10px; align-items: center;
+  }
+  .footer-row .btn { flex: none; padding: 14px 20px; }
+  .hint {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-top: 26px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+</style>
+
+<div class="app">
+  <div class="wrap">
+    <div class="eyebrow"><span class="dot"></span>SITE PHOTO TOOL</div>
+    <h1>현장 포토 타임스탬프</h1>
+    <p class="sub">사진 모서리에 촬영일자 명판을 찍어 넣습니다. 끄면 원본 그대로 저장됩니다.</p>
+
+    <div class="plate">
+      <span class="label">오늘</span>
+      <span class="date" id="todayPlate">-</span>
+    </div>
+
+    <div class="mode-card" id="modeCard">
+      <div class="mode-text">
+        <div class="title">현장 촬영 모드</div>
+        <div class="desc" id="modeDesc">꺼짐 · 날짜 없이 원본 저장</div>
+      </div>
+      <div class="switch" id="switchBtn"><div class="knob"></div></div>
+    </div>
+
+    <div class="options-row">
+      <span>날짜 위치</span>
+      <div class="corner-grid" id="cornerGrid">
+        <button data-c="tl" title="좌상단"></button>
+        <button data-c="tr" title="우상단"></button>
+        <button data-c="bl" title="좌하단"></button>
+        <button data-c="br" class="active" title="우하단"></button>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <label class="btn primary" for="cameraInput">
+        <span class="icon">📷</span>
+        카메라로 촬영
+      </label>
+      <label class="btn ghost" for="galleryInput">
+        <span class="icon">🖼</span>
+        사진 선택 (여러 장)
+      </label>
+    </div>
+    <input type="file" id="cameraInput" accept="image/*" capture="environment">
+    <input type="file" id="galleryInput" accept="image/*" multiple>
+
+    <div class="grid-head">
+      <span class="count"><b id="photoCount">0</b>장</span>
+    </div>
+
+    <div id="emptyState" class="empty">
+      아직 추가된 사진이 없습니다.<br>
+      위에서 촬영하거나 사진을 선택해 주세요.
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <div class="footer-row" id="footerRow" style="display:none;">
+      <button class="btn primary" id="downloadAllBtn" style="flex:1;">전체 다운로드 (ZIP)</button>
+    </div>
+
+    <div class="hint">
+      모든 처리는 이 브라우저 안에서만 이루어지며 사진이 서버로 전송되지 않습니다.
+      촬영 모드가 켜진 상태에서 추가한 사진에만 날짜가 찍히고, 이미 추가된 사진의 상태는 바뀌지 않습니다.
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(function () {
+  const DAY_CHARS = ["일", "월", "화", "수", "목", "금", "토"];
+
+  function formatDate(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const w = DAY_CHARS[d.getDay()];
+    return y + "." + m + "." + day + "." + w;
+  }
+
+  let stampMode = false;
+  let corner = "br";
+  let photos = []; // {id, url, blob, stamped, name}
+  let nextId = 1;
+
+  const todayPlate = document.getElementById("todayPlate");
+  todayPlate.textContent = formatDate(new Date());
+
+  const modeCard = document.getElementById("modeCard");
+  const modeDesc = document.getElementById("modeDesc");
+  const switchBtn = document.getElementById("switchBtn");
+
+  switchBtn.addEventListener("click", () => {
+    stampMode = !stampMode;
+    modeCard.classList.toggle("on", stampMode);
+    switchBtn.classList.toggle("on", stampMode);
+    modeDesc.textContent = stampMode
+      ? "켜짐 · 추가되는 사진에 날짜 자동 삽입"
+      : "꺼짐 · 날짜 없이 원본 저장";
+  });
+
+  const cornerGrid = document.getElementById("cornerGrid");
+  cornerGrid.querySelectorAll("button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      corner = btn.dataset.c;
+      cornerGrid.querySelectorAll("button").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+    });
+  });
+
+  function stampImage(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+
+        const text = formatDate(new Date());
+        const base = Math.min(canvas.width, canvas.height);
+        const fontSize = Math.max(20, Math.min(64, base * 0.045));
+        const paddingX = fontSize * 0.6;
+        const paddingY = fontSize * 0.4;
+        const margin = base * 0.025;
+
+        ctx.font = "700 " + fontSize + "px ui-monospace, Consolas, monospace";
+        const textW = ctx.measureText(text).width;
+        const plateW = textW + paddingX * 2;
+        const plateH = fontSize + paddingY * 2;
+
+        let x, y;
+        if (corner === "br") { x = canvas.width - plateW - margin; y = canvas.height - plateH - margin; }
+        else if (corner === "bl") { x = margin; y = canvas.height - plateH - margin; }
+        else if (corner === "tr") { x = canvas.width - plateW - margin; y = margin; }
+        else { x = margin; y = margin; }
+
+        // plate background
+        ctx.fillStyle = "rgba(18,20,23,0.72)";
+        roundRect(ctx, x, y, plateW, plateH, plateH * 0.14);
+        ctx.fill();
+
+        // accent top strip
+        ctx.fillStyle = "#ff6a13";
+        roundRect(ctx, x, y, plateW, plateH * 0.12, plateH * 0.06);
+        ctx.fill();
+
+        // text
+        ctx.fillStyle = "#ffc300";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, x + paddingX, y + plateH / 2 + fontSize * 0.05);
+
+        URL.revokeObjectURL(url);
+        canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.92);
+      };
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  async function addFiles(fileList) {
+    const files = Array.from(fileList);
+    for (const file of files) {
+      const willStamp = stampMode;
+      let blob = file;
+      if (willStamp) {
+        try { blob = await stampImage(file); }
+        catch (e) { blob = file; }
+      }
+      const url = URL.createObjectURL(blob);
+      photos.push({
+        id: nextId++,
+        url,
+        blob,
+        stamped: willStamp,
+        name: (file.name || "photo").replace(/\.[^.]+$/, "") + (willStamp ? "_stamped.jpg" : (file.name && file.name.match(/\.\w+$/) ? file.name.match(/\.\w+$/)[0] : ".jpg"))
+      });
+    }
+    render();
+  }
+
+  function removePhoto(id) {
+    photos = photos.filter((p) => p.id !== id);
+    render();
+  }
+
+  function downloadPhoto(p) {
+    const a = document.createElement("a");
+    a.href = p.url;
+    a.download = p.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  async function downloadAll() {
+    if (!photos.length || typeof JSZip === "undefined") return;
+    const zip = new JSZip();
+    photos.forEach((p, i) => {
+      zip.file(String(i + 1).padStart(3, "0") + "_" + p.name, p.blob);
+    });
+    const content = await zip.generateAsync({ type: "blob" });
+    const url = URL.createObjectURL(content);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "현장사진_" + formatDate(new Date()).replace(/\./g, "") + ".zip";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function render() {
+    const grid = document.getElementById("grid");
+    const empty = document.getElementById("emptyState");
+    const footer = document.getElementById("footerRow");
+    const count = document.getElementById("photoCount");
+
+    count.textContent = photos.length;
+    empty.style.display = photos.length ? "none" : "block";
+    footer.style.display = photos.length ? "flex" : "none";
+
+    grid.innerHTML = "";
+    photos.forEach((p) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const img = document.createElement("img");
+      img.src = p.url;
+      card.appendChild(img);
+
+      const badge = document.createElement("div");
+      badge.className = "badge " + (p.stamped ? "stamped" : "plain");
+      badge.textContent = p.stamped ? "날짜O" : "날짜X";
+      card.appendChild(badge);
+
+      const remove = document.createElement("div");
+      remove.className = "remove";
+      remove.textContent = "×";
+      remove.onclick = () => removePhoto(p.id);
+      card.appendChild(remove);
+
+      const dl = document.createElement("div");
+      dl.className = "dl";
+      dl.textContent = "⬇";
+      dl.onclick = () => downloadPhoto(p);
+      card.appendChild(dl);
+
+      grid.appendChild(card);
+    });
+  }
+
+  document.getElementById("cameraInput").addEventListener("change", (e) => {
+    if (e.target.files.length) addFiles(e.target.files);
+    e.target.value = "";
+  });
+  document.getElementById("galleryInput").addEventListener("change", (e) => {
+    if (e.target.files.length) addFiles(e.target.files);
+    e.target.value = "";
+  });
+  document.getElementById("downloadAllBtn").addEventListener("click", downloadAll);
+
+  render();
+})();
+</script>
