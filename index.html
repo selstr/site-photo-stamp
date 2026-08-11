@@ -1,656 +1,502 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>현장사진 타임스탬프</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
 <style>
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  .app {
-    --bg-0: #14171a;
-    --bg-1: #1c2024;
-    --surface: #22262b;
-    --surface-2: #282d33;
-    --border: #363c43;
-    --text: #f2efe9;
-    --text-dim: #9aa1a8;
-    --accent: #ff6a13;
-    --accent-dim: #7a3d16;
-    --accent-2: #ffc300;
-    --accent-3: #4ea1ff;
-    --danger: #e5484d;
-    --success: #5fa052;
-    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
-    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-
-    background:
-      radial-gradient(1200px 400px at 50% -10%, #262b31 0%, transparent 60%),
-      linear-gradient(180deg, var(--bg-0), var(--bg-1));
-    color: var(--text);
-    font-family: var(--sans);
-    min-height: 100%;
-    padding: 26px 18px 80px;
-  }
-
-  .wrap { max-width: 820px; margin: 0 auto; }
-
-  /* ---------- Header ---------- */
-  .eyebrow {
-    display: flex; align-items: center; gap: 10px;
-    font-family: var(--mono);
-    font-size: 31px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 14px;
-  }
-  .eyebrow .dot {
-    width: 12px; height: 12px; border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 12px var(--accent);
-  }
-  h1 {
-    font-size: 70px;
-    font-weight: 800;
-    letter-spacing: -0.01em;
-    margin: 0 0 10px;
-    line-height: 1.1;
-  }
-  .sub {
-    color: var(--text-dim);
-    font-size: 38px;
-    margin: 0 0 30px;
-    line-height: 1.4;
-  }
-
-  /* ---------- Date plate (signature element) ---------- */
-  .plate {
-    position: relative;
-    display: inline-flex;
+  body {
+    font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    background: #1a1a1a;
+    color: #eee;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 16px;
-    background: linear-gradient(180deg, #2a2f35, #1f2327);
-    border: 1px solid var(--border);
-    border-top: 3px solid var(--accent);
-    border-radius: 10px;
-    padding: 18px 28px 18px 22px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
-    margin-bottom: 30px;
+    padding: 24px 16px;
   }
-  .plate::before, .plate::after {
-    content: "";
-    position: absolute;
-    top: 8px;
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: #4a5158;
-    box-shadow: inset 0 1px 1px rgba(0,0,0,0.6);
-  }
-  .plate::before { left: 9px; }
-  .plate::after { right: 9px; }
-  .plate .label {
-    font-size: 27px;
-    letter-spacing: 0.1em;
+
+  h1 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #aaa;
+    letter-spacing: 0.08em;
+    margin-bottom: 24px;
     text-transform: uppercase;
-    color: var(--text-dim);
-  }
-  .plate .date {
-    font-family: var(--mono);
-    font-weight: 700;
-    font-size: 49px;
-    letter-spacing: 0.02em;
-    color: var(--accent-2);
   }
 
-  /* ---------- Text input ---------- */
-  .text-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 20px 22px;
-    margin-bottom: 16px;
-  }
-  .text-card label {
-    display: block;
-    font-size: 31px;
-    font-weight: 700;
-    margin-bottom: 10px;
-  }
-  .text-card .desc { font-size: 27px; color: var(--text-dim); margin-bottom: 12px; line-height: 1.4; }
-  .text-card input[type="text"] {
+  /* 드롭존 */
+  #dropzone {
     width: 100%;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-radius: 9px;
-    padding: 14px 16px;
-    color: var(--text);
-    font-size: 34px;
-    font-family: var(--sans);
+    max-width: 480px;
+    border: 2px dashed #444;
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: #242424;
+    margin-bottom: 20px;
   }
-  .text-card input[type="text"]:focus {
-    outline: none;
-    border-color: var(--accent-3);
+  #dropzone:hover, #dropzone.drag-over {
+    border-color: #f0a500;
+    background: #2a2519;
   }
-  .text-card input[type="text"]::placeholder { color: #6b7178; }
+  #dropzone input { display: none; }
+  #dropzone .icon { font-size: 2.8rem; margin-bottom: 10px; }
+  #dropzone p { color: #888; font-size: 0.9rem; line-height: 1.6; }
+  #dropzone strong { color: #f0a500; }
 
-  /* ---------- Toggle ---------- */
-  .mode-card {
+  /* 옵션 패널 */
+  #options {
+    width: 100%;
+    max-width: 480px;
+    background: #242424;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: none;
+  }
+  #options.visible { display: block; }
+
+  .opt-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 24px 26px;
-    margin-bottom: 26px;
-    transition: border-color 0.2s, background 0.2s;
-  }
-  .mode-card.on {
-    border-color: var(--accent);
-    background: linear-gradient(180deg, #2a2420, var(--surface));
-  }
-  .mode-text .title { font-weight: 700; font-size: 41px; margin-bottom: 4px; }
-  .mode-text .desc { font-size: 34px; color: var(--text-dim); line-height: 1.3; }
-  .mode-card.on .mode-text .desc { color: var(--accent-2); }
-
-  .switch {
-    position: relative;
-    width: 76px; height: 42px;
-    background: #34393f;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background 0.2s;
-  }
-  .switch.on { background: var(--accent); border-color: var(--accent); }
-  .switch .knob {
-    position: absolute; top: 3px; left: 3px;
-    width: 34px; height: 34px;
-    background: #f2efe9;
-    border-radius: 50%;
-    transition: transform 0.2s;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-  }
-  .switch.on .knob { transform: translateX(34px); }
-
-  /* ---------- Buttons ---------- */
-  .action-row { display: flex; gap: 14px; margin-bottom: 16px; }
-  .btn {
-    flex: 1;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 10px;
-    padding: 26px 14px;
-    border-radius: 16px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text);
-    font-family: var(--sans);
-    font-weight: 700;
-    font-size: 36px;
-    cursor: pointer;
-    transition: transform 0.08s, border-color 0.15s, background 0.15s;
-  }
-  .btn:active { transform: scale(0.97); }
-  .btn .icon { font-size: 59px; }
-  .btn.primary {
-    background: linear-gradient(180deg, var(--accent), #e0590c);
-    border-color: var(--accent);
-    color: #fff;
-  }
-  .btn.primary:hover { filter: brightness(1.06); }
-  .btn.ghost:hover { border-color: var(--accent); }
-
-  input[type="file"] { display: none; }
-
-  .status-msg {
-    display: none;
-    align-items: center;
+    margin-bottom: 12px;
     gap: 12px;
-    background: var(--surface);
-    border: 1px solid var(--success);
-    color: var(--success);
-    border-radius: 12px;
-    padding: 16px 20px;
-    font-size: 31px;
-    font-weight: 600;
-    margin-bottom: 20px;
   }
-  .status-msg.show { display: flex; }
+  .opt-row:last-child { margin-bottom: 0; }
+  .opt-label { font-size: 0.82rem; color: #999; white-space: nowrap; }
 
-  /* ---------- Grid ---------- */
-  .grid-head {
-    display: flex; align-items: baseline; justify-content: space-between;
-    margin-bottom: 16px;
-    margin-top: 12px;
-  }
-  .grid-head .count { font-family: var(--mono); font-size: 36px; color: var(--text-dim); }
-  .grid-head .count b { color: var(--text); }
-
-  .empty {
-    text-align: center;
-    padding: 60px 24px;
-    color: var(--text-dim);
-    border: 1px dashed var(--border);
-    border-radius: 14px;
-    font-size: 36px;
-    line-height: 1.7;
-  }
-
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 14px;
-    margin-bottom: 26px;
-  }
-  .card {
-    position: relative;
-    aspect-ratio: 1 / 1;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    background: var(--surface-2);
-  }
-  .card img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .card .badge {
-    position: absolute; top: 8px; left: 8px;
-    font-family: var(--mono);
-    font-size: 25px;
-    padding: 5px 10px;
+  select, input[type=color], input[type=range] {
+    background: #333;
+    border: 1px solid #555;
+    color: #eee;
     border-radius: 6px;
-    background: rgba(20,23,26,0.75);
-    backdrop-filter: blur(2px);
+    padding: 4px 8px;
+    font-size: 0.82rem;
   }
-  .card .badge.stamped { color: var(--accent-2); border: 1px solid var(--accent-dim); }
-  .card .badge.plain { color: var(--text-dim); border: 1px solid var(--border); }
-  .card .remove {
-    position: absolute; top: 8px; right: 8px;
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    background: rgba(20,23,26,0.75);
-    border: 1px solid var(--border);
-    color: var(--text);
+  select { flex: 1; }
+  input[type=color] { width: 40px; height: 28px; padding: 2px; cursor: pointer; }
+  input[type=range] { flex: 1; accent-color: #f0a500; }
+
+  /* 미리보기 */
+  #preview-wrap {
+    width: 100%;
+    max-width: 480px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  #preview-wrap.visible { display: flex; }
+
+  #canvas-wrap {
+    width: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #111;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  }
+  canvas { display: block; width: 100%; height: auto; }
+
+  /* 날짜 표시 */
+  #exif-info {
+    font-size: 0.8rem;
+    color: #777;
+    text-align: center;
+  }
+  #exif-info span { color: #f0a500; font-weight: 600; }
+
+  /* 버튼 */
+  #btn-download {
+    width: 100%;
+    max-width: 480px;
+    background: #f0a500;
+    color: #111;
+    font-size: 1rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
     cursor: pointer;
-    font-size: 19px;
-    line-height: 1;
-    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+    display: none;
   }
-  .card .remove:hover { background: var(--danger); border-color: var(--danger); }
-  .card .dl {
-    position: absolute; bottom: 8px; right: 8px;
-    width: 36px; height: 36px;
+  #btn-download:hover { background: #ffbc2e; }
+  #btn-download.visible { display: block; }
+
+  /* 다중 처리 */
+  #batch-list {
+    width: 100%;
+    max-width: 480px;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  #batch-list.visible { display: flex; }
+  .batch-item {
+    background: #2a2a2a;
     border-radius: 8px;
-    background: rgba(20,23,26,0.75);
-    border: 1px solid var(--border);
-    color: var(--text);
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    color: #ccc;
+  }
+  .batch-item .status { color: #f0a500; font-size: 0.75rem; }
+  .batch-item .status.done { color: #4caf50; }
+
+  #btn-batch-download {
+    width: 100%;
+    max-width: 480px;
+    background: #2e7d32;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
     cursor: pointer;
-    font-size: 18px;
-    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+    display: none;
   }
-  .card .dl:hover { background: var(--accent); border-color: var(--accent); }
-
-  .footer-row {
-    display: flex; gap: 14px; align-items: center;
-  }
-  .footer-row .btn { flex: none; padding: 18px 28px; }
-  .hint {
-    font-size: 31px;
-    color: var(--text-dim);
-    line-height: 1.6;
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border);
-  }
+  #btn-batch-download:hover { background: #388e3c; }
+  #btn-batch-download.visible { display: block; }
 </style>
+</head>
+<body>
 
-<div class="app">
-  <div class="wrap">
-    <div class="eyebrow"><span class="dot"></span>SITE PHOTO TOOL</div>
-    <h1>현장 포토 타임스탬프</h1>
-    <p class="sub">사진에 텍스트와 촬영일시를 각각 별도 박스로 찍어 넣습니다. 촬영하면 즉시 저장 시트가 뜹니다.</p>
+<h1>현장사진 타임스탬프</h1>
 
-    <div class="plate">
-      <span class="label">현재</span>
-      <span class="date" id="todayPlate">-</span>
-    </div>
+<!-- 드롭존 -->
+<div id="dropzone">
+  <input type="file" id="file-input" accept="image/*" multiple>
+  <div class="icon">📷</div>
+  <p><strong>사진을 선택</strong>하거나 여기에 끌어다 놓으세요<br>
+  EXIF 촬영일시를 자동으로 읽어 삽입합니다<br>
+  <span style="font-size:0.78rem;color:#666">여러 장 동시 선택 가능</span></p>
+</div>
 
-    <div class="text-card">
-      <label for="customText">사진에 표시할 텍스트 (선택 사항)</label>
-      <div class="desc">날짜 박스와는 별도 박스로 찍힙니다. 예: 3층 중간층 해체 전</div>
-      <input type="text" id="customText" placeholder="예: 지하1층 필수확인점" maxlength="40">
-    </div>
-
-    <div class="mode-card" id="modeCard">
-      <div class="mode-text">
-        <div class="title">현장 촬영 모드</div>
-        <div class="desc" id="modeDesc">꺼짐 · 날짜 없이 원본 저장</div>
-      </div>
-      <div class="switch" id="switchBtn"><div class="knob"></div></div>
-    </div>
-
-    <div class="action-row">
-      <label class="btn primary" for="cameraInput">
-        <span class="icon">📷</span>
-        카메라로 촬영
-      </label>
-      <label class="btn ghost" for="galleryInput">
-        <span class="icon">🖼</span>
-        사진 선택 (여러 장)
-      </label>
-    </div>
-    <input type="file" id="cameraInput" accept="image/*" capture="environment">
-    <input type="file" id="galleryInput" accept="image/*" multiple>
-
-    <div class="status-msg" id="statusMsg">✓ <span id="statusText"></span></div>
-
-    <div class="grid-head">
-      <span class="count"><b id="photoCount">0</b>장</span>
-    </div>
-
-    <div id="emptyState" class="empty">
-      아직 추가된 사진이 없습니다.<br>
-      위에서 촬영하거나 사진을 선택해 주세요.
-    </div>
-
-    <div class="grid" id="grid"></div>
-
-    <div class="footer-row" id="footerRow" style="display:none;">
-      <button class="btn primary" id="downloadAllBtn" style="flex:1;">전체 다운로드 (ZIP)</button>
-    </div>
-
-    <div class="hint">
-      촬영 즉시 스마트폰의 공유 시트가 뜨면 "이미지 저장" 또는 "사진 앱에 저장"을 눌러 사진앱(갤러리)에 바로 저장하세요.
-      공유 시트가 지원되지 않는 기기에서는 자동으로 다운로드됩니다.
-      갤러리에서 여러 장을 선택한 경우는 아래 목록에 모이며, 전체 ZIP으로 한 번에 받을 수 있습니다.
-      날짜는 항상 사진 우측 하단에 찍힙니다.
-      모든 처리는 이 브라우저 안에서만 이루어지며 사진이 서버로 전송되지 않습니다.
-    </div>
+<!-- 옵션 -->
+<div id="options">
+  <div class="opt-row">
+    <span class="opt-label">글자 크기</span>
+    <input type="range" id="opt-fontsize" min="10" max="60" value="28">
+    <span id="opt-fontsize-val" style="font-size:0.78rem;color:#888;width:30px;text-align:right">28</span>
+  </div>
+  <div class="opt-row">
+    <span class="opt-label">글자 색</span>
+    <input type="color" id="opt-color" value="#ffffff">
+    <span class="opt-label" style="margin-left:16px">배경</span>
+    <input type="color" id="opt-bg" value="#000000">
+    <input type="range" id="opt-alpha" min="0" max="100" value="55" style="width:60px">
+    <span id="opt-alpha-val" style="font-size:0.78rem;color:#888;width:30px;text-align:right">55%</span>
+  </div>
+  <div class="opt-row">
+    <span class="opt-label">위치</span>
+    <select id="opt-pos">
+      <option value="br" selected>우측 하단 (기본)</option>
+      <option value="bl">좌측 하단</option>
+      <option value="tr">우측 상단</option>
+      <option value="tl">좌측 상단</option>
+    </select>
+  </div>
+  <div class="opt-row">
+    <span class="opt-label">형식</span>
+    <select id="opt-fmt">
+      <option value="datetime" selected>날짜 + 시간</option>
+      <option value="date">날짜만</option>
+    </select>
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<!-- EXIF 읽은 날짜 표시 -->
+<div id="exif-info" style="margin-bottom:8px;display:none"></div>
+
+<!-- 단일 미리보기 -->
+<div id="preview-wrap">
+  <div id="canvas-wrap"><canvas id="canvas"></canvas></div>
+</div>
+<button id="btn-download">⬇ 저장</button>
+
+<!-- 다중 파일 목록 -->
+<div id="batch-list"></div>
+<button id="btn-batch-download">⬇ 전체 저장 (ZIP)</button>
+
 <script>
-(function () {
-  const DAY_CHARS = ["일", "월", "화", "수", "목", "금", "토"];
-  const CORNER = "br"; // 날짜 위치 고정: 우측 하단
+// ── 상태 ──────────────────────────────────────────
+let files = [];
+let currentImg = null;
+let currentExifDate = null;
 
-  function formatDate(d) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    const w = DAY_CHARS[d.getDay()];
-    return y + "." + m + "." + day + "." + w;
-  }
-  function formatTime(d) {
-    const h = String(d.getHours()).padStart(2, "0");
-    const mi = String(d.getMinutes()).padStart(2, "0");
-    return h + ":" + mi;
-  }
-  function formatDateTime(d) {
-    return formatDate(d) + "  " + formatTime(d);
-  }
+// ── DOM ───────────────────────────────────────────
+const dropzone    = document.getElementById('dropzone');
+const fileInput   = document.getElementById('file-input');
+const canvas      = document.getElementById('canvas');
+const ctx         = canvas.getContext('2d');
+const optFontsize = document.getElementById('opt-fontsize');
+const optFontsizeVal = document.getElementById('opt-fontsize-val');
+const optColor    = document.getElementById('opt-color');
+const optBg       = document.getElementById('opt-bg');
+const optAlpha    = document.getElementById('opt-alpha');
+const optAlphaVal = document.getElementById('opt-alpha-val');
+const optPos      = document.getElementById('opt-pos');
+const optFmt      = document.getElementById('opt-fmt');
+const exifInfo    = document.getElementById('exif-info');
+const previewWrap = document.getElementById('preview-wrap');
+const batchList   = document.getElementById('batch-list');
+const btnDownload = document.getElementById('btn-download');
+const btnBatch    = document.getElementById('btn-batch-download');
+const options     = document.getElementById('options');
 
-  let stampMode = false;
-  let photos = []; // {id, url, blob, stamped, name}
-  let nextId = 1;
+// ── 드래그앤드롭 ──────────────────────────────────
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', e => handleFiles(e.target.files));
 
-  const todayPlate = document.getElementById("todayPlate");
-  function refreshTodayPlate() { todayPlate.textContent = formatDateTime(new Date()); }
-  refreshTodayPlate();
-  setInterval(refreshTodayPlate, 15000);
-
-  const customTextInput = document.getElementById("customText");
-
-  const modeCard = document.getElementById("modeCard");
-  const modeDesc = document.getElementById("modeDesc");
-  const switchBtn = document.getElementById("switchBtn");
-
-  switchBtn.addEventListener("click", () => {
-    stampMode = !stampMode;
-    modeCard.classList.toggle("on", stampMode);
-    switchBtn.classList.toggle("on", stampMode);
-    modeDesc.textContent = stampMode
-      ? "켜짐 · 추가되는 사진에 날짜 자동 삽입"
-      : "꺼짐 · 날짜 없이 원본 저장";
+// ── 옵션 변경 시 다시 그리기 ──────────────────────
+[optFontsize, optColor, optBg, optAlpha, optPos, optFmt].forEach(el => {
+  el.addEventListener('input', () => {
+    optFontsizeVal.textContent = optFontsize.value;
+    optAlphaVal.textContent = optAlpha.value + '%';
+    if (currentImg && files.length === 1) drawStamp(currentImg, currentExifDate);
   });
+});
 
-  function roundRect(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
+// ── 파일 처리 ─────────────────────────────────────
+function handleFiles(fileList) {
+  files = Array.from(fileList);
+  if (files.length === 0) return;
+
+  options.classList.add('visible');
+
+  if (files.length === 1) {
+    // 단일 모드
+    batchList.classList.remove('visible');
+    btnBatch.classList.remove('visible');
+    previewWrap.classList.add('visible');
+    btnDownload.classList.add('visible');
+    loadSingle(files[0]);
+  } else {
+    // 다중 모드
+    previewWrap.classList.remove('visible');
+    btnDownload.classList.remove('visible');
+    showBatchList(files);
   }
+}
 
-  function drawPlate(ctx, text, x, y, fontSize, accentColor, textColor) {
-    const paddingX = fontSize * 0.6;
-    const paddingY = fontSize * 0.42;
-    ctx.font = "700 " + fontSize + "px ui-monospace, Consolas, monospace";
-    const textW = ctx.measureText(text).width;
-    const w = textW + paddingX * 2;
-    const h = fontSize + paddingY * 2;
-
-    ctx.fillStyle = "rgba(18,20,23,0.74)";
-    roundRect(ctx, x, y, w, h, h * 0.14);
-    ctx.fill();
-
-    ctx.fillStyle = accentColor;
-    roundRect(ctx, x, y, w, h * 0.12, h * 0.06);
-    ctx.fill();
-
-    ctx.fillStyle = textColor;
-    ctx.textBaseline = "middle";
-    ctx.fillText(text, x + paddingX, y + h / 2 + fontSize * 0.05);
-
-    return { w, h };
-  }
-
-  function measurePlate(ctx, text, fontSize) {
-    const paddingX = fontSize * 0.6;
-    const paddingY = fontSize * 0.42;
-    ctx.font = "700 " + fontSize + "px ui-monospace, Consolas, monospace";
-    const textW = ctx.measureText(text).width;
-    return { w: textW + paddingX * 2, h: fontSize + paddingY * 2 };
-  }
-
-  function stampImage(file, customText) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
-
-        const base = Math.min(canvas.width, canvas.height);
-        const fontSize = Math.max(54, Math.min(173, base * 0.1215));
-        const margin = base * 0.025;
-        const gap = fontSize * 0.35;
-
-        const dateText = formatDateTime(new Date());
-        const plates = [{ text: dateText, accent: "#ff6a13", color: "#ffc300" }];
-        if (customText && customText.trim().length) {
-          plates.push({ text: customText.trim(), accent: "#4ea1ff", color: "#f2efe9" });
-        }
-
-        // 우측 하단 고정: 날짜 박스가 맨 아래, 텍스트 박스는 그 위에 별도로 스택
-        let cursorY = canvas.height - margin;
-        plates.forEach((p) => {
-          const { w, h } = measurePlate(ctx, p.text, fontSize);
-          const x = canvas.width - margin - w;
-          const y = cursorY - h;
-          drawPlate(ctx, p.text, x, y, fontSize, p.accent, p.color);
-          cursorY -= (h + gap);
-        });
-
-        URL.revokeObjectURL(url);
-        canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.92);
-      };
-      img.onerror = reject;
-      img.src = url;
+// ── 단일 파일 ─────────────────────────────────────
+function loadSingle(file) {
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    currentImg = img;
+    readExif(file, date => {
+      currentExifDate = date;
+      showExifInfo(date, file);
+      drawStamp(img, date);
     });
-  }
+  };
+  img.src = url;
+}
 
-  function showStatus(msg, ok) {
-    const el = document.getElementById("statusMsg");
-    const txt = document.getElementById("statusText");
-    txt.textContent = msg;
-    el.style.borderColor = ok ? "var(--success)" : "var(--accent-3)";
-    el.style.color = ok ? "var(--success)" : "var(--accent-3)";
-    el.classList.add("show");
-    clearTimeout(showStatus._t);
-    showStatus._t = setTimeout(() => el.classList.remove("show"), 3500);
-  }
-
-  async function trySaveToGallery(blob, filename) {
-    try {
-      const file = new File([blob], filename, { type: blob.type || "image/jpeg" });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: filename });
-        showStatus("공유 시트에서 저장을 선택하세요", true);
-        return;
+// ── EXIF 읽기 ─────────────────────────────────────
+function readExif(file, callback) {
+  EXIF.getData(file, function() {
+    const raw = EXIF.getTag(this, 'DateTimeOriginal') || EXIF.getTag(this, 'DateTime');
+    let date = null;
+    if (raw) {
+      // "2025:06:15 14:32:07" 형식
+      const [datePart, timePart] = raw.split(' ');
+      if (datePart && timePart) {
+        const [y, m, d] = datePart.split(':');
+        const [hh, mm, ss] = timePart.split(':');
+        date = new Date(y, m-1, d, hh, mm, ss);
       }
-    } catch (e) {
-      // user cancelled share or unsupported — fall through to download
     }
+    // EXIF 없으면 파일 수정일 사용
+    if (!date || isNaN(date)) date = new Date(file.lastModified);
+    callback(date);
+  });
+}
+
+// ── EXIF 정보 표시 ────────────────────────────────
+function showExifInfo(date, file) {
+  exifInfo.style.display = 'block';
+  exifInfo.innerHTML = `촬영일시 EXIF: <span>${formatDate(date)}</span>`;
+}
+
+// ── 날짜 포맷 ─────────────────────────────────────
+function formatDate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth()+1).padStart(2,'0');
+  const d = String(date.getDate()).padStart(2,'0');
+  const hh = String(date.getHours()).padStart(2,'0');
+  const mm = String(date.getMinutes()).padStart(2,'0');
+  const ss = String(date.getSeconds()).padStart(2,'0');
+  if (optFmt.value === 'date') return `${y}.${m}.${d}`;
+  return `${y}.${m}.${d}  ${hh}:${mm}:${ss}`;
+}
+
+// ── 스탬프 그리기 ─────────────────────────────────
+function drawStamp(img, date) {
+  canvas.width  = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  ctx.drawImage(img, 0, 0);
+
+  const fontSize = Math.round(img.naturalWidth * (parseInt(optFontsize.value) / 500));
+  const text = formatDate(date);
+  const font = `bold ${fontSize}px 'Courier New', monospace`;
+  ctx.font = font;
+
+  const pad = Math.round(fontSize * 0.5);
+  const textW = ctx.measureText(text).width;
+  const textH = fontSize;
+  const bgPad = Math.round(fontSize * 0.35);
+
+  // 위치
+  let x, y;
+  const pos = optPos.value;
+  if (pos === 'br') { x = img.naturalWidth  - textW - pad - bgPad*2; y = img.naturalHeight - pad - bgPad*2; }
+  else if (pos === 'bl') { x = pad; y = img.naturalHeight - pad - bgPad*2; }
+  else if (pos === 'tr') { x = img.naturalWidth  - textW - pad - bgPad*2; y = pad + textH + bgPad; }
+  else { x = pad; y = pad + textH + bgPad; }
+
+  // 배경 박스
+  const alpha = parseInt(optAlpha.value) / 100;
+  const bgColor = hexToRgba(optBg.value, alpha);
+  ctx.fillStyle = bgColor;
+  ctx.beginPath();
+  ctx.roundRect(x - bgPad, y - textH - bgPad, textW + bgPad*2, textH + bgPad*2, 6);
+  ctx.fill();
+
+  // 텍스트
+  ctx.font = font;
+  ctx.fillStyle = optColor.value;
+  ctx.fillText(text, x, y);
+}
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// ── 단일 다운로드 ─────────────────────────────────
+btnDownload.addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/jpeg', 0.92);
+  a.download = 'stamped_' + files[0].name.replace(/\.[^.]+$/, '') + '.jpg';
+  a.click();
+});
+
+// ── 다중 파일 ─────────────────────────────────────
+function showBatchList(fileArr) {
+  batchList.innerHTML = '';
+  batchList.classList.add('visible');
+  btnBatch.classList.add('visible');
+
+  fileArr.forEach((f, i) => {
+    const item = document.createElement('div');
+    item.className = 'batch-item';
+    item.id = 'batch-' + i;
+    item.innerHTML = `<span>${f.name}</span><span class="status" id="st-${i}">대기중</span>`;
+    batchList.appendChild(item);
+  });
+}
+
+// ── 전체 저장 ─────────────────────────────────────
+btnBatch.addEventListener('click', async () => {
+  btnBatch.textContent = '처리 중...';
+  btnBatch.disabled = true;
+
+  const blobs = [];
+
+  for (let i = 0; i < files.length; i++) {
+    const st = document.getElementById('st-' + i);
+    st.textContent = '처리 중...';
+
+    const blob = await processFile(files[i]);
+    blobs.push({ name: 'stamped_' + files[i].name.replace(/\.[^.]+$/, '') + '.jpg', blob });
+    st.textContent = '완료';
+    st.classList.add('done');
+  }
+
+  // ZIP 없이 순차 다운로드
+  for (const { name, blob } of blobs) {
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
+    a.download = name;
     a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 3000);
-    showStatus("다운로드 폴더에 저장되었습니다", true);
-  }
-
-  function makeName(file, willStamp) {
-    const base = (file.name || "photo").replace(/\.[^.]+$/, "");
-    const ext = willStamp ? ".jpg" : ((file.name && file.name.match(/\.\w+$/)) ? file.name.match(/\.\w+$/)[0] : ".jpg");
-    return base + (willStamp ? "_stamped" : "") + ext;
-  }
-
-  function pushPhoto(blob, name, stamped) {
-    const url = URL.createObjectURL(blob);
-    const p = { id: nextId++, url, blob, stamped, name };
-    photos.push(p);
-    render();
-    return p;
-  }
-
-  // 카메라 촬영: 즉시 스탬프 후 바로 저장 시도, 다음 촬영 준비
-  async function processCameraFile(file) {
-    const willStamp = stampMode;
-    const customText = customTextInput.value;
-    let blob = file;
-    if (willStamp) {
-      try { blob = await stampImage(file, customText); }
-      catch (e) { blob = file; }
-    }
-    const name = makeName(file, willStamp);
-    pushPhoto(blob, name, willStamp);
-    await trySaveToGallery(blob, name);
-  }
-
-  // 갤러리 다중 선택: 목록에 모아서 개별/일괄 다운로드
-  async function processGalleryFiles(fileList) {
-    const files = Array.from(fileList);
-    for (const file of files) {
-      const willStamp = stampMode;
-      const customText = customTextInput.value;
-      let blob = file;
-      if (willStamp) {
-        try { blob = await stampImage(file, customText); }
-        catch (e) { blob = file; }
-      }
-      const name = makeName(file, willStamp);
-      pushPhoto(blob, name, willStamp);
-    }
-  }
-
-  function removePhoto(id) {
-    photos = photos.filter((p) => p.id !== id);
-    render();
-  }
-
-  function downloadPhoto(p) {
-    const a = document.createElement("a");
-    a.href = p.url;
-    a.download = p.name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
-
-  async function downloadAll() {
-    if (!photos.length || typeof JSZip === "undefined") return;
-    const zip = new JSZip();
-    photos.forEach((p, i) => {
-      zip.file(String(i + 1).padStart(3, "0") + "_" + p.name, p.blob);
-    });
-    const content = await zip.generateAsync({ type: "blob" });
-    const url = URL.createObjectURL(content);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "현장사진_" + formatDate(new Date()).replace(/\./g, "") + ".zip";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    await new Promise(r => setTimeout(r, 300));
     URL.revokeObjectURL(url);
   }
 
-  function render() {
-    const grid = document.getElementById("grid");
-    const empty = document.getElementById("emptyState");
-    const footer = document.getElementById("footerRow");
-    const count = document.getElementById("photoCount");
+  btnBatch.textContent = '⬇ 전체 저장';
+  btnBatch.disabled = false;
+});
 
-    count.textContent = photos.length;
-    empty.style.display = photos.length ? "none" : "block";
-    footer.style.display = photos.length ? "flex" : "none";
+function processFile(file) {
+  return new Promise(resolve => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      readExif(file, date => {
+        const c = document.createElement('canvas');
+        c.width  = img.naturalWidth;
+        c.height = img.naturalHeight;
+        const cx = c.getContext('2d');
+        cx.drawImage(img, 0, 0);
 
-    grid.innerHTML = "";
-    photos.forEach((p) => {
-      const card = document.createElement("div");
-      card.className = "card";
+        const fontSize = Math.round(img.naturalWidth * (parseInt(optFontsize.value) / 500));
+        const text = formatDate(date);
+        const font = `bold ${fontSize}px 'Courier New', monospace`;
+        cx.font = font;
 
-      const img = document.createElement("img");
-      img.src = p.url;
-      card.appendChild(img);
+        const pad = Math.round(fontSize * 0.5);
+        const textW = cx.measureText(text).width;
+        const textH = fontSize;
+        const bgPad = Math.round(fontSize * 0.35);
 
-      const badge = document.createElement("div");
-      badge.className = "badge " + (p.stamped ? "stamped" : "plain");
-      badge.textContent = p.stamped ? "날짜O" : "날짜X";
-      card.appendChild(badge);
+        let x, y;
+        const pos = optPos.value;
+        if (pos === 'br') { x = img.naturalWidth  - textW - pad - bgPad*2; y = img.naturalHeight - pad - bgPad*2; }
+        else if (pos === 'bl') { x = pad; y = img.naturalHeight - pad - bgPad*2; }
+        else if (pos === 'tr') { x = img.naturalWidth  - textW - pad - bgPad*2; y = pad + textH + bgPad; }
+        else { x = pad; y = pad + textH + bgPad; }
 
-      const remove = document.createElement("div");
-      remove.className = "remove";
-      remove.textContent = "×";
-      remove.onclick = () => removePhoto(p.id);
-      card.appendChild(remove);
+        const alpha = parseInt(optAlpha.value) / 100;
+        cx.fillStyle = hexToRgba(optBg.value, alpha);
+        cx.beginPath();
+        cx.roundRect(x - bgPad, y - textH - bgPad, textW + bgPad*2, textH + bgPad*2, 6);
+        cx.fill();
 
-      const dl = document.createElement("div");
-      dl.className = "dl";
-      dl.textContent = "⬇";
-      dl.onclick = () => downloadPhoto(p);
-      card.appendChild(dl);
+        cx.font = font;
+        cx.fillStyle = optColor.value;
+        cx.fillText(text, x, y);
 
-      grid.appendChild(card);
-    });
-  }
-
-  document.getElementById("cameraInput").addEventListener("change", async (e) => {
-    if (e.target.files.length) {
-      await processCameraFile(e.target.files[0]);
-    }
-    e.target.value = "";
+        c.toBlob(b => resolve(b), 'image/jpeg', 0.92);
+        URL.revokeObjectURL(url);
+      });
+    };
+    img.src = url;
   });
-  document.getElementById("galleryInput").addEventListener("change", (e) => {
-    if (e.target.files.length) processGalleryFiles(e.target.files);
-    e.target.value = "";
-  });
-  document.getElementById("downloadAllBtn").addEventListener("click", downloadAll);
-
-  render();
-})();
+}
 </script>
+</body>
+</html>
